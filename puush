@@ -4,6 +4,7 @@ PUUSH_API_KEY=""
 
 # Puush for Ubuntu/linux
 # Owner : Sunmock Yang
+# Contributions by: Liam S. Crouch
 # www.sunmock.com
 # May 2014
 #
@@ -13,6 +14,7 @@ PUUSH_API_KEY=""
 # - zenity
 # - xclip
 # - notify-send
+# - screenfetch
 #
 # Licence : Beerware
 #
@@ -23,10 +25,11 @@ PUUSH_API_KEY=""
 #
 # 		command			description		(recommended keyboard shortcut)
 #		---------------------------------------------------------------
-#		puush -c		puush window	(Ctrl + Shift + 2/@)
-#		puush -a		puush desktop	(Ctrl + Shift + 3/#)
+#		puush -c		puush window		(Ctrl + Shift + 2/@)
+#		puush -a		puush desktop		(Ctrl + Shift + 3/#)
 #		puush -b		area puush		(Ctrl + Shift + 4/$)
 #		puush -d		file upload		(Ctrl + Shift + U)
+# 		puush -f		screenfetch desktop	None
 #
 #
 # Notes:
@@ -99,7 +102,12 @@ case "$1" in
 			gnome-screenshot -f "$fileName"
 			puushFile "$fileName"
 		;;
-
+	-f)
+		screenfetch
+			fileName=$(generateFileName)
+			gnome-screenshot -f "$fileName"
+			puushFile "$fileName"
+		;;
 	-b)
 		echo "Area"
 			fileName=$(generateFileName)
