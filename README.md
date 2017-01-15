@@ -1,7 +1,8 @@
 S-ul uploader for linux
 =====================
 
-Originally written by Sunmock Yang as a puush uploader
+Originally written by Sunmock Yang as a puush uploader. 
+
 Ported for s-ul by Liam Svanåsbakken Crouch
 
 Please note this README is from the original puush uploader, but all existing features are left untouched.
