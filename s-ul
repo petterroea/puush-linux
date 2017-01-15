@@ -1,0 +1,154 @@
+#!/bin/bash
+# Set API Key here
+SUL_API_KEY=""
+
+# s-ul for Ubuntu/linux
+# Originally known as "Puush for Ubuntu/linux"
+# Owner : Sunmock Yang
+# Contributions by: Liam S. Crouch
+# www.sunmock.com
+# www.petterroea.com
+# May 2014
+# Additions January 2017
+#
+# Dependencies:
+# - gnome-screenshot
+# - curl
+# - zenity
+# - xclip
+# - notify-send
+# - screenfetch
+# - jq
+#
+# Licence : Beerware
+#
+# Instructions:
+# - Add your s-ul API key to SUL_API_KEY (You can find your API key at http://puush.me/account/settings)
+# - Place this file wherever you want (/usr/local/bin)
+# - Set up keyboard shortcuts within linux (in Ubuntu it's system settings > keyboard > keyboard shortcuts > custom shortcuts)
+#
+# 		command			description		(recommended keyboard shortcut)
+#		---------------------------------------------------------------
+#		s-ul -c			puush window		(Ctrl + Shift + 2/@)
+#		s-ul -a			puush desktop		(Ctrl + Shift + 3/#)
+#		s-ul -b			area puush		(Ctrl + Shift + 4/$)
+#		s-ul -d			file upload		(Ctrl + Shift + U)
+# 		s-ul -f			screenfetch desktop	None
+#
+#
+# Notes:
+# - Link(s) will be copied into clipboard and appear in notifications
+# - puush curl upload code borrowed from online sources
+
+# Usage: sulFile [fileName]
+function sulFile ()
+{
+	if [ -z "$1" ]; then
+		echo "No file specified"
+		exit 1
+	elif [ ! -f "$1" ]; then
+		echo "S-ul cancelled"
+		exit 1
+	fi
+
+	jsonReturn=`curl "https://s-ul.eu/upload.php" -# -F "wizard=true" -F "key=$SUL_API_KEY" -F "gen=3.2" -F "file=@$1"`
+	protocol=`echo "$jsonReturn" | jq -r '.protocol'`
+	domain=`echo "$jsonReturn" | jq -r '.domain'`
+	filename=`echo "$jsonReturn" | jq -r '.filename'`
+	printf "Got protocol: $protocol"
+	printf "Got domain: $domain"
+	printf "Got filename: $filename"
+	url=`echo "$protocol$domain/$filename"`
+	if [ ! -z "$url" ]; then
+		#Copy link to clipboard, show notification
+	    printf $url | xclip -selection "clipboard"
+	    printf $url
+		notify-send -i "$( cd "$( dirname "$0" )" && pwd )/icon.png" -t 2000 "puush complete!" "$fileURL"
+	fi
+}
+
+function helpText ()
+{
+  printf "_____________ s-ul for linux _____________\n"
+  printf "Created by Sunmock Yang using the puush api\n"
+  printf "Modifyed for s-ul by petterroea"
+  printf "\n"
+  printf "Usage:\n"
+  printf "  s-ul [OPTIONS] [PATH]\n"
+  printf "\n"
+  printf "OPTIONS:\n"
+  printf "  -a                 upload entire desktop\n"
+  printf "  -b                 select area to capture\n"
+  printf "  -c                 capture current window\n"
+  printf "  -d                 upload specific file (opens file dialog)\n"
+  printf "  -f                 run screenfetch, capture entire desktop and upload\n"
+  printf "\n"
+  printf "  --help,-h          show this page\n"
+  printf "\n"
+  printf "PATH:\n"
+  printf "  PATH               optional: path of file to puush\n"
+}
+
+function generateFileName () { echo "/tmp/s-ul-linux ($(date +"%Y-%m-%d at %I.%M.%S")).png"; }
+
+
+if [ -z "$SUL_API_KEY" ]; then
+  echo "Set the variable SUL_API_KEY in $0"
+  echo "You can find your API key at http://puush.me/account/settings"
+
+  notify-send -i "$( cd "$( dirname "$0" )" && pwd )/icon.png" "Set the variable SUL_API_KEY in $0" "You can find your API key at https://s-ul.eu/settings.php"
+
+  exit 1
+
+elif [ -z "$1" ]; then
+	echo "No file entered."
+	helpText
+  exit 1
+
+fi
+
+#Get file to puush and puush it
+case "$1" in
+	-a)
+		echo "Whole Desktop"
+			fileName=$(generateFileName)
+			gnome-screenshot -f "$fileName"
+			sulFile "$fileName"
+		;;
+	-f)
+		screenfetch
+			fileName=$(generateFileName)
+			gnome-screenshot -f "$fileName"
+			sulFile "$fileName"
+		;;
+	-b)
+		echo "Area"
+			fileName=$(generateFileName)
+			gnome-screenshot -a -f "$fileName"
+			sulFile "$fileName"
+		;;
+
+	-c)
+		echo "Window"
+			fileName=$(generateFileName)
+			gnome-screenshot -w -f "$fileName"
+			sulFile "$fileName"
+		;;
+
+	-d)
+		echo "File Upload"
+			fileName=`zenity --file-selection`
+			sulFile "$fileName"
+		;;
+
+	-h|--help)
+		helpText
+		exit 0
+		;;
+		
+	*)
+		echo "Upload $1"
+			sulFile "$1"
+		;;
+		
+esac
